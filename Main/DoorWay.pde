@@ -16,6 +16,9 @@ class DoorWay {
     rectMode(CENTER);
     rect(xpos, ypos, rwidth, rheight);
   }
+  
+  void changeColor() {
+  }
 
   boolean isMouseInsideDoor(float mouseX, float mouseY, float rectX, float rectY, float rectWidth, float rectHeight) {
     return ((mouseX >= rectX - rectWidth / 2) && (mouseX <= rectX + rectWidth / 2) && (mouseY >= rectY - rectHeight / 2) && (mouseY <= rectY + rectHeight / 2));
