@@ -1,6 +1,12 @@
-//HELLO lol
-
 SceneManager sceneManager;
+DoorWay fromWindowToFrontDoor;
+DoorWay fromFrontDoorToWindow;
+DoorWay fromFrontDoorToKitchen;
+DoorWay fromKitchenToBathroom;
+
+float padding = 50;
+float rectW = 800;
+float rectH = 100;
 
 void setup() {
   fullScreen();
@@ -13,50 +19,53 @@ void setup() {
   sceneManager.addScene(Scene.KITCHEN, this::kitchenScene);
   sceneManager.addScene(Scene.BATHROOM, this::bathroomScene);
   sceneManager.addScene(Scene.GAME_OVER, this::gameOverScene);
+
+  // Initializing rectangular doorways for each scene
+  fromWindowToFrontDoor = new DoorWay(width / 2, height - padding, rectW, rectH);
+  fromFrontDoorToWindow = new DoorWay(width / 2, height - padding, rectW, rectH);
+  fromFrontDoorToKitchen = new DoorWay(width / 2 - padding / 2, height / 2, rectH + padding, rectW / 2 + padding * 2);
+  fromKitchenToBathroom = new DoorWay(width + padding * 2, height / 2, rectH, rectW);
 }
 
 void draw() {
   background(255);
   sceneManager.update();
-  rectMode(CENTER);
+
+  if (sceneManager.currentScene == Scene.WINDOW_ROOM) {
+    fromWindowToFrontDoor.render();
+  } else if (sceneManager.currentScene == Scene.DOOR_ROOM) {
+    fromFrontDoorToWindow.render();
+    fromFrontDoorToKitchen.render();
+  }
+  //} else if (sceneManager.currentScene == )
 }
 
 void mouseClicked() {
-  
-  //////////// TO CHANGE!!!!!
-  float rectW = 800;
-  float rectH = 200;
-  float paddingFromTheBottom = 100;
 
   // Handle mouse clicks based on the current scene
   if (sceneManager.currentScene == Scene.START) {
-    // Handle clicks for the start scene
-    // Transition to the next scene if needed
     sceneManager.switchScene(Scene.WINDOW_ROOM);
   } else if (sceneManager.currentScene == Scene.WINDOW_ROOM) {
-    if (isMouseInsideDoor(mouseX, mouseY, width / 2, height - paddingFromTheBottom, rectW, rectH)) {
-
+    if (fromWindowToFrontDoor.isMouseInsideDoor(mouseX, mouseY, width / 2, height - padding, rectW, rectH)) {
       sceneManager.switchScene(Scene.DOOR_ROOM);
     }
   } else if (sceneManager.currentScene == Scene.DOOR_ROOM) {
-    // Handle clicks for the bedroom scene
-    // Transition to other scenes or perform actions
-    sceneManager.switchScene(Scene.KITCHEN);
+    if (fromFrontDoorToWindow.isMouseInsideDoor(mouseX, mouseY, width / 2, height - padding, rectW, rectH)) {
+      sceneManager.switchScene(Scene.WINDOW_ROOM);
+    }
+    if (fromFrontDoorToKitchen.isMouseInsideDoor(mouseX, mouseY, width / 2 - padding / 2, height / 2, rectH + padding, rectW / 2 + padding * 2)) {
+      sceneManager.switchScene(Scene.KITCHEN);
+    }
   } else if (sceneManager.currentScene == Scene.KITCHEN) {
-    // Handle clicks for the kitchen scene
     sceneManager.switchScene(Scene.BATHROOM);
   } else if (sceneManager.currentScene == Scene.BATHROOM) {
     sceneManager.switchScene(Scene.GAME_OVER);
   } else if (sceneManager.currentScene == Scene.GAME_OVER) {
-    // Handle clicks for the game over scene
-    // Restart the game or perform other actions
+
     sceneManager.switchScene(Scene.START);
   }
 }
 
-boolean isMouseInsideDoor(float mouseX, float mouseY, float rectX, float rectY, float rectWidth, float rectHeight) {
-  return ((mouseX >= rectX - rectWidth) && (mouseX <= rectX + rectWidth) && (mouseY >= rectY - rectHeight) && (mouseY <= rectY + rectHeight));
-}
 
 // Define functions for each scene
 void startScene() {
@@ -68,15 +77,10 @@ void startScene() {
 }
 
 void livingRoomWindowScene() {
-  //////////// TO CHANGE!!!!!
-  float rectW = 800;
-  float rectH = 200;
-  float paddingFromTheBottom = 100;
+
+
   // Code for the living room with the window scene
   image(loadImage("livingRoomWindow.jpg"), 0, 0);
-  noFill();
-  strokeWeight(2);
-  rect(width / 2, height - paddingFromTheBottom, rectW, rectH);
 }
 
 void livingRoomDoorScene() {
