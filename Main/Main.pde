@@ -1,4 +1,4 @@
-//HELLO BUDDY!!
+//HELLO lol
 
 SceneManager sceneManager;
 
