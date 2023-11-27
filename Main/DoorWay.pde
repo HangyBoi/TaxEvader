@@ -13,14 +13,13 @@ class DoorWay {
   
   void render() {
     noFill();
+    strokeWeight(5);
+    stroke(255, 0, 0);
     rectMode(CENTER);
     rect(xpos, ypos, rwidth, rheight);
   }
-  
-  void changeColor() {
-  }
 
-  boolean isMouseInsideDoor(float mouseX, float mouseY, float rectX, float rectY, float rectWidth, float rectHeight) {
-    return ((mouseX >= rectX - rectWidth / 2) && (mouseX <= rectX + rectWidth / 2) && (mouseY >= rectY - rectHeight / 2) && (mouseY <= rectY + rectHeight / 2));
+  boolean isMouseInsideDoor(float mouseX, float mouseY) {
+    return ((mouseX >= xpos - rwidth / 2) && (mouseX <= xpos + rwidth / 2) && (mouseY >= ypos - rheight / 2) && (mouseY <= ypos + rheight / 2));
   }
 }

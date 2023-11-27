@@ -1,23 +1,23 @@
 SceneManager sceneManager;
 
-DoorWay fromWindowToFrontDoor;
-DoorWay fromFrontDoorToWindow;
-DoorWay fromFrontDoorToHallway;
-DoorWay fromHallwayToFrontDoor;
-DoorWay fromHallwayToKitchen;
-DoorWay fromHallwayToBathroom;
-DoorWay fromKitchenToHallway;
-DoorWay fromBathroomToHallway;
+PImage cursorIdleStateImg, cursorObjInteractImg;
 
-float padding = 50;
+final float padding = 50;
 float rectW = 800;
 float rectH = 100;
 
+DoorWay[] doorways = new DoorWay[8];
+
 void setup() {
   fullScreen();
+
+  cursorIdleStateImg = loadImage("idleCursor.png");
+  cursorIdleStateImg.resize(32, 32);
+  cursorObjInteractImg = loadImage("interactCursor.png");
+  cursorObjInteractImg.resize(32, 32);
+
   sceneManager = new SceneManager();
 
-  // Add scenes to the manager
   sceneManager.addScene(Scene.START, this::startScene);
   sceneManager.addScene(Scene.WINDOW_ROOM, this::livingRoomWindowScene);
   sceneManager.addScene(Scene.DOOR_ROOM, this::livingRoomDoorScene);
@@ -26,75 +26,124 @@ void setup() {
   sceneManager.addScene(Scene.BATHROOM, this::bathroomScene);
   sceneManager.addScene(Scene.GAME_OVER, this::gameOverScene);
 
-  // Initializing rectangular doorways for each scene
-  fromWindowToFrontDoor = new DoorWay(width / 2, height - padding, rectW, rectH);
-  fromFrontDoorToWindow = new DoorWay(width / 2, height - padding, rectW, rectH);
-  fromFrontDoorToHallway = new DoorWay(width / 2 - padding / 2, height / 2, rectH + padding, rectW / 2 + padding * 2);
-  fromHallwayToFrontDoor = new DoorWay(width / 2, height - padding, rectW, rectH);
-  fromHallwayToKitchen = new DoorWay(width / 2 - padding * 1.5, height / 2 + padding * 2, rectH * 4, rectW / 1.5);
-  fromHallwayToBathroom = new DoorWay(width / 5 - padding, height / 2 + padding * 3, rectH * 3, rectW - padding);
-  fromKitchenToHallway = new DoorWay(padding * 3, height / 2 + padding, rectH * 3, rectW - padding * 2);
-  fromBathroomToHallway = new DoorWay(width - rectH * 2 - padding * 2, height / 2, rectH * 2, height);
+  initializeDoorways();
+}
+
+void initializeDoorways() {
+  doorways[0] = new DoorWay(width / 2, height - padding, rectW, rectH); //WINDOW -> DOOR
+  doorways[1] = new DoorWay(width / 2, height - padding, rectW, rectH); //DOOR -> WINDOW
+  doorways[2] = new DoorWay(width / 2 - padding / 2, height / 2, rectH + padding, rectW / 2 + padding * 2); //DOOR -> HALLWAY
+  doorways[3] = new DoorWay(width / 2, height - padding, rectW, rectH); //HALLWAY -> DOOR
+  doorways[4] = new DoorWay(width / 2 - padding * 1.5, height / 2 + padding * 2, rectH * 4, rectW / 1.5); //HALLWAY -> KITCHEN
+  doorways[5] = new DoorWay(width / 5 - padding, height / 2 + padding * 3, rectH * 3, rectW - padding); //HALLWAY -> BATHROOM
+  doorways[6] = new DoorWay(padding * 3, height / 2 + padding, rectH * 3, rectW - padding * 2); //KITCHEN -> HALLWAY
+  doorways[7] = new DoorWay(width - rectH * 2 - padding * 2, height / 2, rectH * 2, height); //BATHROOM -> HALLWAY
 }
 
 void draw() {
   background(255);
   sceneManager.update();
 
+  if (isMouseInsideDoor()) {
+    cursor(cursorObjInteractImg);
+  } else {
+    cursor(cursorIdleStateImg);
+  }
+
   renderDoorways();
 }
 
 void renderDoorways() {
-  if (sceneManager.currentScene == Scene.WINDOW_ROOM) {
-    fromWindowToFrontDoor.render();
-  } else if (sceneManager.currentScene == Scene.DOOR_ROOM) {
-    fromFrontDoorToWindow.render();
-    fromFrontDoorToHallway.render();
-  } else if (sceneManager.currentScene == Scene.HALLWAY) {
-    fromHallwayToKitchen.render();
-    fromHallwayToBathroom.render();
-    fromHallwayToFrontDoor.render();
-  } else if (sceneManager.currentScene == Scene.KITCHEN) {
-    fromKitchenToHallway.render();
-  } else if (sceneManager.currentScene == Scene.BATHROOM) {
-    fromBathroomToHallway.render();
+  int[] renderIndices = getRenderIndices(sceneManager.currentScene);
+  for (int index : renderIndices) {
+    doorways[index].render();
   }
 }
 
-void mouseClicked() {
+boolean isMouseInsideDoor() {
+  int[] checkIndices = getCheckIndices(sceneManager.currentScene);
+  for (int index : checkIndices) {
+    if (doorways[index].isMouseInsideDoor(mouseX, mouseY)) {
+      return true;
+    }
+  }
+  return false;
+}
 
-  // Handle mouse clicks based on the current scene
+void mouseClicked() {
+  Scene targetScene = null;
+
   if (sceneManager.currentScene == Scene.START) {
-    sceneManager.switchScene(Scene.WINDOW_ROOM);
-  } else if (sceneManager.currentScene == Scene.WINDOW_ROOM) {
-    if (fromWindowToFrontDoor.isMouseInsideDoor(mouseX, mouseY, width / 2, height - padding, rectW, rectH)) {
-      sceneManager.switchScene(Scene.DOOR_ROOM);
+    targetScene = Scene.WINDOW_ROOM;
+  } else {
+    int[] checkIndices = getCheckIndices(sceneManager.currentScene);
+    for (int index : checkIndices) {
+      if (doorways[index].isMouseInsideDoor(mouseX, mouseY)) {
+        targetScene = getTargetScene(index);
+        break;
+      }
     }
-  } else if (sceneManager.currentScene == Scene.DOOR_ROOM) {
-    if (fromFrontDoorToWindow.isMouseInsideDoor(mouseX, mouseY, width / 2, height - padding, rectW, rectH)) {
-      sceneManager.switchScene(Scene.WINDOW_ROOM);
-    }
-    if (fromFrontDoorToHallway.isMouseInsideDoor(mouseX, mouseY, width / 2 - padding / 2, height / 2, rectH + padding, rectW / 2 + padding * 2)) {
-      sceneManager.switchScene(Scene.HALLWAY);
-    }
-  } else if (sceneManager.currentScene == Scene.HALLWAY) {
-    if (fromHallwayToKitchen.isMouseInsideDoor(mouseX, mouseY, width / 2 - padding * 1.5, height / 2 + padding * 2, rectH * 4, rectW / 1.5)) {
-      sceneManager.switchScene(Scene.KITCHEN);
-    }
-    if (fromHallwayToBathroom.isMouseInsideDoor(mouseX, mouseY, width / 5 - padding, height / 2 + padding * 3, rectH * 3, rectW - padding)) {
-      sceneManager.switchScene(Scene.BATHROOM);
-    }
-    if (fromHallwayToFrontDoor.isMouseInsideDoor(mouseX, mouseY, width / 2, height - padding, rectW, rectH)) {
-      sceneManager.switchScene(Scene.DOOR_ROOM);
-    }
-  } else if (sceneManager.currentScene == Scene.KITCHEN) {
-    if (fromKitchenToHallway.isMouseInsideDoor(mouseX, mouseY, padding * 3, height / 2 + padding, rectH * 3, rectW - padding * 2)) {
-      sceneManager.switchScene(Scene.HALLWAY);
-    }
-  } else if (sceneManager.currentScene == Scene.BATHROOM) {
-    if (fromBathroomToHallway.isMouseInsideDoor(mouseX, mouseY, width - rectH * 2 - padding * 2, height / 2, rectH * 2, height)) {
-      sceneManager.switchScene(Scene.HALLWAY);
-    }
+  }
+
+  if (targetScene != null) {
+    sceneManager.switchScene(targetScene);
+  }
+}
+
+int[] getRenderIndices(Scene currentScene) {
+  switch (currentScene) {
+  case WINDOW_ROOM:
+    return new int[]{0};
+  case DOOR_ROOM:
+    return new int[]{1, 2};
+  case HALLWAY:
+    return new int[]{3, 4, 5};
+  case KITCHEN:
+    return new int[]{6};
+  case BATHROOM:
+    return new int[]{7};
+  default:
+    return new int[]{};
+  }
+}
+
+int[] getCheckIndices(Scene currentScene) {
+  switch (currentScene) {
+  case WINDOW_ROOM:
+    return new int[]{0};
+  case DOOR_ROOM:
+    return new int[]{1, 2};
+  case HALLWAY:
+    return new int[]{3, 4, 5};
+  case KITCHEN:
+    return new int[]{6};
+  case BATHROOM:
+    return new int[]{7};
+  default:
+    return new int[]{};
+  }
+}
+
+Scene getTargetScene(int index) {
+  switch (index) {
+  case 0:
+    return Scene.DOOR_ROOM;
+  case 1:
+    return Scene.WINDOW_ROOM;
+  case 2:
+    return Scene.HALLWAY;
+  case 3:
+    return Scene.DOOR_ROOM;
+  case 4:
+    return Scene.KITCHEN;
+  case 5:
+    return Scene.BATHROOM;
+  case 6:
+    return Scene.HALLWAY;
+  case 7:
+    return Scene.HALLWAY;
+  default:
+    return null;
   }
 }
 
