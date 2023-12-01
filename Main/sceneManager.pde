@@ -2,7 +2,7 @@ import java.util.HashMap;
 
 // Enum for different scenes
 enum Scene {
-  START, WINDOW_ROOM, DOOR_ROOM, HALLWAY, KITCHEN, BATHROOM, GAME_OVER
+  START, WINDOW_ROOM, DOOR_ROOM, HALLWAY, KITCHEN, BATHROOM, SAFE, GAME_OVER, INTRO, END, BOOK_1, BOOK_2, BOOK_3, BOOK_4
 }
 
 // SceneManager class
